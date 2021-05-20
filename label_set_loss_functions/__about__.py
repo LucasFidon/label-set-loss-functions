@@ -1,0 +1,5 @@
+__author__ = "Lucas Fidon"
+__email__ = "lucas.fidon@kcl.ac.uk"
+__license__ = "BSD-3-Clause"
+__version__ = "0.0.1"
+__summary__ = "Official PyTorch implementation of label-set loss functions for segmentation"

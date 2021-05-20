@@ -1,0 +1,1 @@
+from .marginalization import softmax_marginalize, log_softmax_marginalize
