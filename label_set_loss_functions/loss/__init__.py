@@ -5,3 +5,5 @@ from .focal_loss import FocalLoss
 from .marginalized_focal_loss import MarginalizedFocalLoss
 from .cross_entropy_loss import CrossEntropyLoss
 from .marginalized_cross_entropy_loss import MarginalizedCrossEntropyLoss
+from .marginalized_dice_focal import MarginalizedDiceFocalLoss
+from .marginalized_dice_ce import MarginalizedDiceCE
