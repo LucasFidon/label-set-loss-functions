@@ -8,6 +8,7 @@
 import torch
 import torch.nn.functional as F
 from label_set_loss_functions.loss.mean_dice_loss import MeanDiceLoss
+from label_set_loss_functions.utils import check_label_set_map
 
 
 class LeafDiceLoss(MeanDiceLoss):
@@ -21,6 +22,7 @@ class LeafDiceLoss(MeanDiceLoss):
             reduction=reduction,
             squared=squared,
         )
+        check_label_set_map(labels_superset_map)
         self.labels_superset_map = labels_superset_map
 
     def _prepare_data(self, input_batch, target):

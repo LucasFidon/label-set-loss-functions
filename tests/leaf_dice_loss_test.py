@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import unittest
-from label_set_loss_functions.loss.leaf_dice_loss import LeafDiceLoss
+from label_set_loss_functions.loss import LeafDiceLoss
 
 
 class TestLeafDiceLoss(unittest.TestCase):
@@ -45,12 +45,10 @@ class TestLeafDiceLoss(unittest.TestCase):
         dice_loss_good = float(loss.forward(pred_very_good, target).cpu())
         self.assertAlmostEqual(dice_loss_good, true_res, places=3)
 
-        #todo
         true_res = 1 - (1. / 4.) * (1 + (2. / 3.) + 0 + 0)
         dice_loss_1_error = float(loss.forward(pred_1_error, target).cpu())
         self.assertAlmostEqual(dice_loss_1_error, true_res, places=3)
 
-        #todo
         true_res = 1 - (1. / 4.) * (24. / (12 + 16) + 0 + 0 + 0)
         dice_loss_3_error = float(loss.forward(pred_3_errors, target).cpu())
         self.assertAlmostEqual(dice_loss_3_error, true_res, places=3)
@@ -62,8 +60,8 @@ class TestLeafDiceLoss(unittest.TestCase):
         to segment one image.
         We verify that the loss is decreasing in almost all SGD steps.
         """
-        learning_rate = 0.01
-        max_iter = 20
+        learning_rate = 0.001
+        max_iter = 50
         num_classes = 2  # labels 0 and 1
         labels_superset_map = {
             2: [0, 1],
@@ -139,7 +137,7 @@ class TestLeafDiceLoss(unittest.TestCase):
         decreasing_steps_ratio = float(num_decreasing_steps) / (len(loss_history) - 1)
 
         # verify that the loss is decreasing for sufficiently many SGD steps
-        self.assertTrue(decreasing_steps_ratio > 0.9)
+        self.assertTrue(decreasing_steps_ratio > 0.5)
 
 
 if __name__ == '__main__':

@@ -48,15 +48,6 @@ class MeanDiceLoss(nn.Module):
         3D: num batch, dim x, dim y, dim z or num batch, 1, dim x, dim y, dim z
         :return: tensor array.
         """
-        # epsilon = 1e-5  # small number
-
-        # assert input_batch.dim() >= 4, "Input must be at least 4D scores Tensor " \
-        #                          "of shape (N, C, H, W) in 2d " \
-        #                          "and (N, C, H, W, D) in 3d."
-        # assert target.dim() >= 3, "Target must be at least 3D segmentation Tensor " \
-        #                           "of shape (N, C, H, W), (N, H, W) or (N, 1, H, W) in 2d " \
-        #                           "and (N, C, H, W, D), (N, H, W, D) or (N, 1, H, W, D) in 3d."
-
         pred_proba, target_proba = self._prepare_data(input_batch, target)
 
         # Compute the dice for all classes
@@ -69,11 +60,11 @@ class MeanDiceLoss(nn.Module):
             den1 = torch.sum(pred_proba, dim=2)  # b,c
             den2 = torch.sum(target_proba, dim=2)  # b,c
 
-        # I choose to not add an epsilon ot the numerator.
+        # I choose not to add an epsilon on the numerator.
         # This is because it can lead to unstabilities in the gradient.
         # As a result, for empty prediction and empty target the Dice loss value
-        # is 1 and not 0. But for the optimization of a deep neural network
-        # it is the gradient not the loss that is relevant.
+        # is 1 and not 0. But it is fine because for the optimization of a
+        # deep neural network it is the gradient not the loss that is relevant.
         dice = (2. * num) / (den1 + den2 + EPSILON)
 
         # Get the mean of the dices over all classes

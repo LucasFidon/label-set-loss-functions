@@ -32,7 +32,7 @@ def softmax_marginalize(flat_input, flat_target, labels_superset_map):
 
     # Marginalize the predicted and target probability maps
     for super_class in list(labels_superset_map.keys()):
-        with torch.no_grad():
+        with torch.no_grad():  # only constants in this part so we don't need to compute gradients
             # Compute the mask to use for the marginalization wrt super class super_class
             super_class_size = len(labels_superset_map[super_class])
             super_class_mask = (flat_target == super_class)  # b,s
@@ -64,6 +64,8 @@ def log_softmax_marginalize(flat_input, flat_target, labels_superset_map):
     Compute
     log(1/Omega x \sum_{gt classes set} exp(out_c)) - log(1/Omega x \sum_{all classes} exp(out_c))
 
+    This is useful with loss functions like the cross entropy loss that use the log proba rather than the proba.
+
     :param flat_input:
     :param flat_target:
     :param labels_superset_map:
@@ -94,22 +96,23 @@ def log_softmax_marginalize(flat_input, flat_target, labels_superset_map):
 
     # Marginalize the predicted and target probability / log-probability maps
     for super_class in list(labels_superset_map.keys()):
-        super_class_size = len(labels_superset_map[super_class])
-        super_class_mask = (flat_target == super_class)  # b,s
-        w = torch.zeros(num_out_classes, device=flat_input.device)  # c,
-        w_bool = torch.zeros(num_out_classes, device=flat_input.device)  # c,
-        mask = torch.zeros_like(pred_logproba, device=flat_input.device)  # b,s,c
-        for c in labels_superset_map[super_class]:
-            w[c] = 1. / super_class_size
-            w_bool[c] = 1
-        mask[super_class_mask, :] = w_bool[None, :]  # 1 if part of the ground-truth superset else 0
-        target_proba[super_class_mask, :] = w[None, :]
+        with torch.no_grad():  # only constants in this part so we don't need to compute gradients
+            super_class_size = len(labels_superset_map[super_class])
+            super_class_mask = (flat_target == super_class)  # b,s
+            w = torch.zeros(num_out_classes, device=flat_input.device)  # c,
+            w_bool = torch.zeros(num_out_classes, device=flat_input.device)  # c,
+            mask = torch.zeros_like(pred_logproba, device=flat_input.device)  # b,s,c
+            for c in labels_superset_map[super_class]:
+                w[c] = 1. / super_class_size
+                w_bool[c] = 1
+            mask[super_class_mask, :] = w_bool[None, :]  # 1 if part of the ground-truth superset else 0
+            target_proba[super_class_mask, :] = w[None, :]
         # Most important lines of code; Compute for all voxels:
         # log(1/Omega x \sum_{super_class} exp(out_c)) - log(\sum_{all classes} exp(out_c))
         superclass_logproba = torch.log(torch.sum(w[None, None, :] * pred_explogit, dim=2))  # b,s
         superclass_logproba -= torch.log(torch.sum(pred_explogit, dim=2))
         # This uses a lot of memory...
-        # Copy the logproba to all the class proba of the ambiguous voxels
+        # Copy the logproba to all the class proba of the voxels labeled as super_class
         pred_logproba = (1 - mask) * pred_logproba + mask * superclass_logproba[:, :, None]
 
     # Transpose to match PyTorch convention
