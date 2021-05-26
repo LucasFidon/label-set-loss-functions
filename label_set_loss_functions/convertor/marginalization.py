@@ -13,49 +13,71 @@ import torch.nn.functional as F
 EPS = 1e-10
 
 
-def softmax_marginalize(flat_input, flat_target, labels_superset_map):
-    assert flat_input.dim() == 1 + flat_target.dim(), "Only compatible with label map ground-truth segmentation"
-
+def marginalize(flat_proba, flat_partial_seg, labels_superset_map):
+    """
+    Compute the marginalization operation.
+    :param flat_proba: tensor; Class probability map. It is assumed that the spatial dimensions have been flattened.
+        Expected shape: (nb batches, nb classes, nb voxels)
+    :param flat_partial_seg: tensor; Partial segmentation. It is assumed that the spatial dimensions have been flattened.
+        Expected shape: (nb batches, nb voxels)
+    :param labels_superset_map: dict; mapping from set labels to list of labels.
+    :return: marginalized probability map and marginalized one-hot segmentation map.
+    """
+    assert flat_proba.dim() == 1 + flat_partial_seg.dim(), "Only compatible with label map ground-truth segmentation"
     # Get the nb of classes that are not supersets.
     # This should correspond to the number of output channels.
-    num_out_classes = flat_input.size(1)  # nb of classes that are not supersets
+    num_out_classes = flat_proba.size(1)  # nb of classes that are not supersets
 
-    # Initialize the batch probability map prediction
-    pred_proba = F.softmax(flat_input, dim=1).permute(0, 2, 1)  # b,s,c
+    # Reorient the proba
+    flat_proba = flat_proba.permute(0, 2, 1)  # b,s,c
 
-    # Initialize the target probability map
+    # Initialize the marginalized one-hot probability map associated with the partial segmentation
     # Warning: here we assume that the superset label numbers are higher
     # than the (singleton) label number
-    target_proba = F.one_hot(flat_target, num_classes=-1).float()  # b,s,c+
+    flat_partial_seg = flat_partial_seg.long()  # make sure that the target is a long before using one_hot
+    marg_onehot_seg = F.one_hot(flat_partial_seg, num_classes=-1).float()  # b,s,c+
     # Remove the supersets
-    target_proba = target_proba[:, :, :num_out_classes]  # b,s,c
+    marg_onehot_seg = marg_onehot_seg[:, :, :num_out_classes]  # b,s,c
 
     # Marginalize the predicted and target probability maps
     for super_class in list(labels_superset_map.keys()):
         with torch.no_grad():  # only constants in this part so we don't need to compute gradients
             # Compute the mask to use for the marginalization wrt super class super_class
             super_class_size = len(labels_superset_map[super_class])
-            super_class_mask = (flat_target == super_class)  # b,s
-            w = torch.zeros(num_out_classes, device=flat_input.device)  # c,
-            w_bool = torch.zeros(num_out_classes, device=flat_input.device)  # c,
-            mask = torch.zeros_like(pred_proba, device=flat_input.device, requires_grad=False)  # b,s,c
+            super_class_mask = (flat_partial_seg == super_class)  # b,s
+            if torch.sum(super_class_mask) == 0:  # super_class is not present in flat_target; skip.
+                continue
+            w = torch.zeros(num_out_classes, device=flat_proba.device)  # c,
+            w_bool = torch.zeros(num_out_classes, device=flat_proba.device)  # c,
+            mask = torch.zeros_like(flat_proba, device=flat_proba.device, requires_grad=False)  # b,s,c
             for c in labels_superset_map[super_class]:
                 w[c] = 1. / super_class_size
                 w_bool[c] = 1
             mask[super_class_mask, :] = w_bool[None, :]
 
-            # Marginalize the target probability for the super class super_class
-            target_proba[super_class_mask, :] = w[None, :]
+            # Marginalize the one hot probabilities of the partial segmentation for the super class super_class
+            marg_onehot_seg[super_class_mask, :] = w[None, :]
 
         # Marginalize the predicted proba for the super class super_class
-        marginal_map_full = torch.sum(w[None, None, :] * pred_proba, dim=2)  # b,s
+        marginal_map_full = torch.sum(w[None, None, :] * flat_proba, dim=2)  # b,s
         # This uses a lot of memory...
-        pred_proba = (1 - mask) * pred_proba + mask * marginal_map_full[:, :, None]
+        flat_proba = (1 - mask) * flat_proba + mask * marginal_map_full[:, :, None]
 
     # Transpose to match PyTorch convention
-    pred_proba = pred_proba.permute(0, 2, 1)  # b,c,s
-    target_proba = target_proba.permute(0, 2, 1)  # b,c,s
+    marg_proba = flat_proba.permute(0, 2, 1)  # b,c,s
+    marg_onehot_seg = marg_onehot_seg.permute(0, 2, 1)  # b,c,s
 
+    return marg_proba, marg_onehot_seg
+
+
+def softmax_marginalize(flat_input, flat_target, labels_superset_map):
+    assert flat_input.dim() == 1 + flat_target.dim(), "Only compatible with label map ground-truth segmentation"
+    pred_proba = F.softmax(flat_input, dim=1)  # b,c,s
+    pred_proba, target_proba = marginalize(
+        flat_proba=pred_proba,
+        flat_partial_seg=flat_target,
+        labels_superset_map=labels_superset_map,
+    )
     return pred_proba, target_proba
 
 
@@ -90,6 +112,7 @@ def log_softmax_marginalize(flat_input, flat_target, labels_superset_map):
     # Initialize the target probability map
     # Warning: here we assume that the superset label numbers are higher
     # than the (singleton) label number
+    flat_target = flat_target.long()  # make sure that the target is a long before using one_hot
     target_proba = F.one_hot(flat_target, num_classes=-1).float()  # b,s,c+
     # Remove the supersets
     target_proba = target_proba[:, :, :num_out_classes]  # b,s,c
@@ -99,6 +122,8 @@ def log_softmax_marginalize(flat_input, flat_target, labels_superset_map):
         with torch.no_grad():  # only constants in this part so we don't need to compute gradients
             super_class_size = len(labels_superset_map[super_class])
             super_class_mask = (flat_target == super_class)  # b,s
+            if torch.sum(super_class_mask) == 0:  # super_class is not present in flat_target; skip.
+                continue
             w = torch.zeros(num_out_classes, device=flat_input.device)  # c,
             w_bool = torch.zeros(num_out_classes, device=flat_input.device)  # c,
             mask = torch.zeros_like(pred_logproba, device=flat_input.device)  # b,s,c

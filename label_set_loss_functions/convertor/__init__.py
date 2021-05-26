@@ -1,1 +1,1 @@
-from .marginalization import softmax_marginalize, log_softmax_marginalize
+from .marginalization import marginalize, softmax_marginalize, log_softmax_marginalize
