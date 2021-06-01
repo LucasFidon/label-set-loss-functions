@@ -27,6 +27,7 @@ def marginalize(flat_proba, flat_partial_seg, labels_superset_map):
     # Get the nb of classes that are not supersets.
     # This should correspond to the number of output channels.
     num_out_classes = flat_proba.size(1)  # nb of classes that are not supersets
+    num_total_classes = max(labels_superset_map.keys()) + 1  # total number fo classes (with supersets)
 
     # Reorient the proba
     flat_proba = flat_proba.permute(0, 2, 1)  # b,s,c
@@ -35,7 +36,7 @@ def marginalize(flat_proba, flat_partial_seg, labels_superset_map):
     # Warning: here we assume that the superset label numbers are higher
     # than the (singleton) label number
     flat_partial_seg = flat_partial_seg.long()  # make sure that the target is a long before using one_hot
-    marg_onehot_seg = F.one_hot(flat_partial_seg, num_classes=-1).float()  # b,s,c+
+    marg_onehot_seg = F.one_hot(flat_partial_seg, num_classes=num_total_classes).float()  # b,s,c+
     # Remove the supersets
     marg_onehot_seg = marg_onehot_seg[:, :, :num_out_classes]  # b,s,c
 
@@ -98,6 +99,7 @@ def log_softmax_marginalize(flat_input, flat_target, labels_superset_map):
     # Get the nb of classes that are not supersets.
     # This should correspond to the number of output channels.
     num_out_classes = flat_input.size(1)  # nb of classes that are not supersets
+    num_total_classes = max(labels_superset_map.keys()) + 1  # total number fo classes (with supersets)
 
     # Normalize flat_input for stability
     max_flat_input, _ = torch.max(flat_input, dim=1, keepdim=True)
@@ -113,7 +115,7 @@ def log_softmax_marginalize(flat_input, flat_target, labels_superset_map):
     # Warning: here we assume that the superset label numbers are higher
     # than the (singleton) label number
     flat_target = flat_target.long()  # make sure that the target is a long before using one_hot
-    target_proba = F.one_hot(flat_target, num_classes=-1).float()  # b,s,c+
+    target_proba = F.one_hot(flat_target, num_classes=num_total_classes).float()  # b,s,c+
     # Remove the supersets
     target_proba = target_proba[:, :, :num_out_classes]  # b,s,c
 

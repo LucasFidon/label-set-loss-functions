@@ -82,4 +82,3 @@ class MarginalizedDiceFocalLoss(_WeightedLoss):
         # Default is mean reduction
         else:
             return loss.mean()
-
