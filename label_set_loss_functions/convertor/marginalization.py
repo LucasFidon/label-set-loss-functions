@@ -27,7 +27,7 @@ def marginalize(flat_proba, flat_partial_seg, labels_superset_map):
     # Get the nb of classes that are not supersets.
     # This should correspond to the number of output channels.
     num_out_classes = flat_proba.size(1)  # nb of classes that are not supersets
-    num_total_classes = max(labels_superset_map.keys()) + 1  # total number fo classes (with supersets)
+    num_total_classes = max(labels_superset_map.keys()) + 1  # total number of classes (with supersets)
 
     # Reorient the proba
     flat_proba = flat_proba.permute(0, 2, 1)  # b,s,c
