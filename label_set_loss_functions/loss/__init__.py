@@ -7,3 +7,5 @@ from .cross_entropy_loss import CrossEntropyLoss
 from .marginalized_cross_entropy_loss import MarginalizedCrossEntropyLoss
 from .marginalized_dice_focal import MarginalizedDiceFocalLoss
 from .marginalized_dice_ce import MarginalizedDiceCE
+from .leaf_dice_focal import LeafDiceFocalLoss
+from .leaf_dice_ce import LeafDiceCE
