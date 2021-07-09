@@ -43,6 +43,7 @@ If you use the label-set loss functions in you work, please cite
 
 L. Fidon, M. Aertsen, D. Emam, N. Mufti, F. Guffens, T. Deprest, P. Demaerel, A. L. David, A. Melbourne, S. Ourselin, J. Deprest, T. Vercauteren.
 [Label-set Loss Functions for Partial Supervision: Application to Fetal Brain 3D MRI Parcellation][arxiv]
+International Conference on Medical Image Computing and Computer-Assisted Intervention. Springer, Cham, 2021.
 
 Bibtex:
 ```
