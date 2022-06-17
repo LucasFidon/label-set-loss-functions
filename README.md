@@ -38,6 +38,33 @@ leaf_dice(score_pred1, partial_seg)  # 0.5
 leaf_dice(score_pred2, partial_seg)  # 0.5
 ```
 
+## List of label-set loss functions implemented
+```python
+# Leaf-Dice loss
+from label_set_loss_functions.loss import LeafDiceLoss
+
+# Marginalized Dice loss 
+from label_set_loss_functions.loss import MarginalizedDiceLoss
+
+# Marginalized Cross Entropy loss
+from label_set_loss_functions.loss import MarginalizedCrossEntropyLoss
+
+# Marginalized Focal loss
+from label_set_loss_functions.loss import MarginalizedFocalLoss
+
+# Marginalized Dice loss + marginalized Cross Entropy loss
+from label_set_loss_functions.loss import MarginalizedDiceCE
+
+# Marginalized Dice loss + marginalized Focal loss
+from label_set_loss_functions.loss import MarginalizedDiceFocalLoss
+
+# Leaf-Dice loss + marginalized Focal loss
+from label_set_loss_functions.loss import LeafDiceFocalLoss
+
+# Leaf-Dice loss + marginalized Cross Entropy loss
+from label_set_loss_functions.loss import LeafDiceCE
+```
+
 ## How to cite
 If you use the label-set loss functions in you work, please cite
 
