@@ -9,7 +9,7 @@ from label_set_loss_functions.loss.marginalized_dice_focal import MarginalizedDi
 
 
 class MarginalizedDiceCE(MarginalizedDiceFocalLoss):
-    def __init__(self, weight=None, squared=True, reduction='mean', labels_superset_map=None):
+    def __init__(self, labels_superset_map, weight=None, squared=True, reduction='mean'):
         """
         :param weight: (tensor) weights to apply to the
             voxels of each class. If None no weights are applied.

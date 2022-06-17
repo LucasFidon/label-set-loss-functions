@@ -9,7 +9,7 @@ from label_set_loss_functions.loss import MarginalizedFocalLoss
 
 
 class MarginalizedCrossEntropyLoss(MarginalizedFocalLoss):
-    def __init__(self, weight=None, reduction='mean'):
+    def __init__(self, labels_superset_map, weight=None, reduction='mean'):
         """
         :param weight: (tensor) weights to apply to the
             voxels of each class. If None no weights are applied.
@@ -19,4 +19,5 @@ class MarginalizedCrossEntropyLoss(MarginalizedFocalLoss):
             gamma=0,
             weight=weight,
             reduction=reduction,
+            labels_superset_map=labels_superset_map,
         )

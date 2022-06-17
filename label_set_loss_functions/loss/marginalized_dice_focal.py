@@ -13,7 +13,7 @@ from label_set_loss_functions.loss.mean_dice_loss import EPSILON
 
 
 class MarginalizedDiceFocalLoss(_WeightedLoss):
-    def __init__(self, gamma=2., weight=None, squared=True, reduction='mean', labels_superset_map=None):
+    def __init__(self, labels_superset_map, gamma=2., weight=None, squared=True, reduction='mean'):
         """
         :param gamma: (float) value of the exponent gamma in the definition
             of the Focal loss.
